@@ -10,14 +10,22 @@
 		<div class="w-full h-[3em]">
 			{{ user?.username || 'User...' }}
 		</div>
+		<div>
+      <VDatePicker
+        v-model.range="range"
+        :min-date='new Date()'
+        :columns="2"
+      />
+		</div>
 		<div class="flex-1">
-			<span @click="_click" class="cursor-pointer">Book Now</span>
+			<span v-if="range" @click="_click" class="cursor-pointer">Book Now</span>
 		</div>
 	</div>
 </template>
 <script>
 	import axios from 'axios';
 	import CaptchaV2 from '@/components/CaptchaV2.vue';
+	
 	export default {
 		name: 'Calendar',
 		props: {
@@ -31,6 +39,7 @@
 		},
 		data() {
 			return {
+				range: null,
 				threshold: 0.5,
 				verified: false,
 				captchav2: false,
@@ -56,7 +65,7 @@
 					const jwt = this.$cookies.get('jwt');
 					const response = await axios.post(
 						`${this.back_url}/api/verify-captcha`,
-						{ token, version },
+						{ token, version, dates: this.range },
 						{ headers: {
 						  'Content-Type': 'application/json',
 						  'Authorization': 'Bearer ' + jwt,

@@ -4,7 +4,7 @@ import { default as axios } from 'axios';
 
 module.exports = {
 	async verify(ctx) {
-		const { token, version } = ctx.request.body;
+		const { token, version, dates } = ctx.request.body;
 		const key = version === 'v2' ?
 		  process.env.RECAPTCHA_V2_SECRECT_KEY :
 		  process.env.RECAPTCHA_SECRECT_KEY;
