@@ -5,7 +5,7 @@
 			<div class="flex flex-col items-start gap-3">
 				<div></div>
 				<div class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-				<div @click="_click" class="p-3 rounded-sm">Check Availability</div>
+				<div @click="_click" class="p-3 rounded-sm cursor-pointer">Check Availability</div>
 			</div>
 		</div>
 	</div>
