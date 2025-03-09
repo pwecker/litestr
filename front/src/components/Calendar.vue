@@ -12,9 +12,12 @@
 		</div>
 		<div>
       <VDatePicker
+        v-if="attributes.length > 0"
         v-model.range="range"
         :min-date='new Date()'
         :columns="2"
+        :attributes="attributes"
+        :disabled-dates="blocked_dates"
       />
 		</div>
 		<div class="flex-1">
@@ -25,6 +28,18 @@
 <script>
 	import axios from 'axios';
 	import CaptchaV2 from '@/components/CaptchaV2.vue';
+
+	const colors = {
+		confirmed: 'gray',
+		owned: 'green',
+		requested: 'yellow'
+	};
+
+	const fillModes = {
+		confirmed: 'solid',
+		owned: 'solid',
+		requested: 'solid'
+	}
 	
 	export default {
 		name: 'Calendar',
@@ -37,19 +52,73 @@
 		components: {
 			CaptchaV2
 		},
+		computed: {
+			blocked_dates() {
+				return this.attributes.map(item => {
+					return item.dates.map(range => ({
+						start: this._shift_day(range[0], 1),
+						end: this._shift_day(range[1], -1)
+					}));
+				}).flat();
+			}
+		},
 		data() {
 			return {
+				attributes: [],
 				range: null,
-				threshold: 0.5,
+				threshold: 0.99,
 				verified: false,
 				captchav2: false,
 				back_url: import.meta.env.VITE_BACK_URL || 'http://localhost:1337',
 				captchav2_site_key: import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || '123'
 			}
 		},
+		async created() {
+			try {
+				const jwt = this.$cookies.get('jwt');
+				const response = await axios.get(
+					`${this.back_url}/api/reservations`,
+					{ headers: {
+					  'Content-Type': 'application/json',
+					  'Authorization': 'Bearer ' + jwt,
+					}}
+				);
+				const { data } = response;
+
+				const attributes = Object.values(data.reduce((acc, curr) => {
+					const stat = curr.stat === 'confirmed' && curr.own ? 'owned' : curr.stat;
+					if (!acc[curr.stat]) {
+						acc[stat] = {
+							highlight: {
+								color: colors[stat],
+							  fillMode: fillModes[stat],
+							},
+							dates: []
+						};
+					}
+
+					acc[stat].dates.push([curr.in, curr.out]);
+					return acc;
+				}, {}));
+
+				this.attributes = attributes;
+			} catch(e) {}
+		},
 		methods: {
 			_book() {
 				alert('Booked!')
+			},
+			_shift_day(dateStr, shift) {
+				const date = this._parse_utc(dateStr);
+				date.setUTCDate(date.getUTCDate() + shift);
+				return this._format_utc(date);
+			},
+			_parse_utc(dateStr) {
+				const [year, month, day] = dateStr.split('-').map(Number);
+				return new Date(Date.UTC(year, month - 1, day));
+			},
+			_format_utc(date) {
+				return date.toISOString().split('T')[0];
 			},
 			async _click() {
 				if (this.verified) {
@@ -82,8 +151,8 @@
 
 				}
 			},
-			_v2_expired() {},
-			_v2_errored() {}
+			_captchav2_expired() {},
+			_captchav2_errored() {}
 		}
 	}
 </script>
