@@ -66,7 +66,7 @@
 			return {
 				attributes: [],
 				range: null,
-				threshold: 0.99,
+				threshold: import.meta.env.VITE_RECAPTCHA_THRESHOLD || 0.5,
 				verified: false,
 				captchav2: false,
 				back_url: import.meta.env.VITE_BACK_URL || 'http://localhost:1337',
