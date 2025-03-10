@@ -5,7 +5,7 @@ interface LifecycleEvent {
     in: string;
     out: string;
     publishedAt: string | null;
-    createdBy: { id?: number, email?: string };
+    user: { id: number, email: string }
   };
 }
 
@@ -36,16 +36,16 @@ function ordinalSuffix(day) {
 export default {
 	async afterCreate(event: LifecycleEvent) {
 		const { result } = event;
-		const reservation = result;
-		if (reservation.stat === 'requested' && reservation.publishedAt !== null) {
+		console.log(result)
+		if (result.stat === 'requested' && result.publishedAt !== null) {
 			try {
 				await strapi.plugin('email').service('email').send({
 					to: process.env.ADMIN_EMAIL,
 					from: process.env.MANAGER_EMAIL,
-					replyTo: reservation.createdBy.email,
-					subject: `Reservation Requested: ${textDate(reservation.in)} - ${textDate(reservation.out)}`,
+					replyTo: result.user.email,
+					subject: `Reservation Requested: ${textDate(result.in)} - ${textDate(result.out)}`,
 					text: ``,
-					html: `A new reservation has been requested by ${reservation.createdBy.email}<br/><br/><b>Check-in:</b> ${textDate(reservation.in)}<br/><b>Check-out:</b> ${textDate(reservation.out)}<br/><br/>Reply to this email to speak with them.`
+					html: `A new reservation has been requested by ${result.user.email}<br/><br/><b>Check-in:</b> ${textDate(result.in)}<br/><b>Check-out:</b> ${textDate(result.out)}<br/><br/>Reply to this email to speak with them.`
 				});
 			} catch(e) {
 				console.log(e)

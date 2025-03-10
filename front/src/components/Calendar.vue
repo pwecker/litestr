@@ -21,7 +21,7 @@
       />
 		</div>
 		<div class="flex-1">
-			<span v-if="range" @click="_click" class="cursor-pointer">Book Now</span>
+			<span v-if="range && !verified" @click="_click" class="cursor-pointer">Book Now</span>
 		</div>
 	</div>
 </template>
@@ -105,9 +105,6 @@
 			} catch(e) {}
 		},
 		methods: {
-			_book() {
-				alert('Booked!')
-			},
 			_shift_day(dateStr, shift) {
 				const date = this._parse_utc(dateStr);
 				date.setUTCDate(date.getUTCDate() + shift);
@@ -121,9 +118,7 @@
 				return date.toISOString().split('T')[0];
 			},
 			async _click() {
-				if (this.verified) {
-					this._book();
-				} else {
+				if (!this.verified) {
 					await this.$recaptchaLoaded();
 					const token = await this.$recaptcha('book_now');
 					this._validate(token, 'v3');
@@ -134,7 +129,7 @@
 					const jwt = this.$cookies.get('jwt');
 					const response = await axios.post(
 						`${this.back_url}/api/verify-captcha`,
-						{ token, version, dates: this.range },
+						{ token, version, threshold: this.threshold, dates: this.range },
 						{ headers: {
 						  'Content-Type': 'application/json',
 						  'Authorization': 'Bearer ' + jwt,
@@ -143,7 +138,6 @@
 					const { data } = response;
 					if (data.success && (data.score === undefined || data.score >= this.threshold)) {
 						this.verified = true;
-						this._book();
 					} else if (data.score && data.score < this.threshold) {
 						this.captchav2 = true;
 					}

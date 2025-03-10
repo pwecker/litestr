@@ -4,7 +4,8 @@ import { default as axios } from 'axios';
 
 module.exports = {
 	async verify(ctx) {
-		const { token, version, dates } = ctx.request.body;
+		const user = await strapi.plugins['users-permissions'].services.jwt.getToken(ctx);
+		const { token, version, threshold, dates } = ctx.request.body;
 		const key = version === 'v2' ?
 		  process.env.RECAPTCHA_V2_SECRECT_KEY :
 		  process.env.RECAPTCHA_SECRECT_KEY;
@@ -22,6 +23,17 @@ module.exports = {
     });
 
 		const { data } = response;
+		if (data.score > threshold) {
+			strapi.entityService.create('api::reservation.reservation', { data: {
+				stat: 'requested',
+				in: dates.start.split('T')[0],
+				out: dates.end.split('T')[0],
+				user: user.id
+			},
+		  populate: ['user']
+		});
+		}
+
 		return ctx.send(data);
 	}
 };
