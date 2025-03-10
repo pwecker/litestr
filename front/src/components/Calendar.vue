@@ -141,6 +141,10 @@
 			},
 			async _click() {
 				if (!this.verified) {
+
+					const uxCalendar = { ...(store.model.ux.Calendar || {}) };
+				  store.publish('ux.Calendar', { ...uxCalendar, clicked: true });
+
 					await this.$recaptchaLoaded();
 					const token = await this.$recaptcha('request_dates');
 					this._validate(token, 'v3');
