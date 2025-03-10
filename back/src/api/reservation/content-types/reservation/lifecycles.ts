@@ -41,6 +41,9 @@ function ordinalSuffix(day) {
     default: return `${day}th`;
   }
 }
+function capitalize(str) {
+	return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 export default {
 	async afterUpdate(event: LifecycleEvent) {
@@ -49,7 +52,19 @@ export default {
 		//document service
 		const { user } = await strapi.entityService.findOne('api::reservation.reservation', result.id, { populate: [ 'user' ] }) as Reservation;
 
-		const actions = ['cancel', 'deny'];
+		try {
+			await strapi.plugin('email').service('email').send({
+				to: user.email,
+				from: process.env.MANAGER_EMAIL,
+				replyTo: process.env.ADMIN_EMAIL,
+				subject: `${capitalize(result.stat)}: ${textDate(result.in)} - ${textDate(result.out)}`,
+				text: ``,
+				html: `Reservation ${capitalize(result.stat)}: ${textDate(result.in)} - ${textDate(result.out)}`
+			});
+		} catch(e) {}
+
+		if (result.stat === 'confirmed') {
+			const actions = ['cancel', 'deny'];
 			const tokens: Record<string, string> = {};
 
 			for (const action of actions) {
@@ -64,8 +79,9 @@ export default {
 				tokens[action] = token;
 			}
 
-			const baseUrl = process.env.BACK_URL;
+      const username = user.email.split('@')[0];
 
+			const baseUrl = process.env.BACK_URL;
 	    const cancelUrl = `${baseUrl}/api/reservations/action?token=${tokens.cancel}`;
 	    const denyUrl = `${baseUrl}/api/reservations/action?token=${tokens.deny}`;
 
@@ -74,7 +90,7 @@ export default {
 					to: process.env.ADMIN_EMAIL,
 					from: process.env.MANAGER_EMAIL,
 					replyTo: process.env.MANAGER_EMAIL,
-					subject: `Confirmed: ${textDate(result.in)} - ${textDate(result.out)}`,
+					subject: `${capitalize(username)} Confirmed: ${textDate(result.in)} - ${textDate(result.out)}`,
 					text: ``,
 					html: `Confirmed: ${user.email}<br/>
 					  ${textDate(result.in)} - ${textDate(result.out)}<br/>
@@ -88,9 +104,8 @@ export default {
 					    </a>
 					  </div>`
 				});
-			} catch(e) {
-				// console.log(e)
-			}
+			} catch(e) {}
+		}
 	},
 	async afterCreate(event: LifecycleEvent) {
 		const { result } = event;
@@ -111,8 +126,9 @@ export default {
 				tokens[action] = token;
 			}
 
-			const baseUrl = process.env.BACK_URL;
+			const username = result.user.email.split('@')[0];
 
+			const baseUrl = process.env.BACK_URL;
 			const confirmUrl = `${baseUrl}/api/reservations/action?token=${tokens.confirm}`;
 	    const cancelUrl = `${baseUrl}/api/reservations/action?token=${tokens.cancel}`;
 	    const denyUrl = `${baseUrl}/api/reservations/action?token=${tokens.deny}`;
@@ -122,17 +138,18 @@ export default {
 					to: process.env.ADMIN_EMAIL,
 					from: process.env.MANAGER_EMAIL,
 					replyTo: result.user.email,
-					subject: `${result.user.email.split('@')[0]} Requests: ${textDate(result.in)} - ${textDate(result.out)}`,
+					subject: `${capitalize(username)} Requests: ${textDate(result.in)} - ${textDate(result.out)}`,
 					text: ``,
 					html: `A new reservation has been requested by ${result.user.email}<br/><br/><b>Check-in:</b> ${textDate(result.in)}<br/><b>Check-out:</b> ${textDate(result.out)}<br/><br/>Reply to this email to speak with them.`
 				});
 			} catch(e) {}
+
 			try {
 				await strapi.plugin('email').service('email').send({
 					to: process.env.ADMIN_EMAIL,
 					from: process.env.MANAGER_EMAIL,
 					replyTo: process.env.MANAGER_EMAIL,
-					subject: `Request Controls: ${textDate(result.in)} - ${textDate(result.out)}`,
+					subject: `${capitalize(username)} Controls: ${textDate(result.in)} - ${textDate(result.out)}`,
 					text: ``,
 					html: `${result.user.email}<br/>
 					  ${textDate(result.in)} - ${textDate(result.out)}<br/>
