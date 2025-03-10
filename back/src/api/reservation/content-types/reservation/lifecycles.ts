@@ -36,7 +36,6 @@ function ordinalSuffix(day) {
 export default {
 	async afterCreate(event: LifecycleEvent) {
 		const { result } = event;
-		console.log(result)
 		if (result.stat === 'requested' && result.publishedAt !== null) {
 			try {
 				await strapi.plugin('email').service('email').send({
@@ -47,9 +46,7 @@ export default {
 					text: ``,
 					html: `A new reservation has been requested by ${result.user.email}<br/><br/><b>Check-in:</b> ${textDate(result.in)}<br/><b>Check-out:</b> ${textDate(result.out)}<br/><br/>Reply to this email to speak with them.`
 				});
-			} catch(e) {
-				console.log(e)
-			}
+			} catch(e) {}
 		}
 	}
 }
