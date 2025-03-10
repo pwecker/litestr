@@ -18,6 +18,7 @@
         :columns="2"
         :attributes="attributes"
         :disabled-dates="blocked_dates"
+        :timezone="'UTC'"
       />
 		</div>
 		<div class="flex-1">
