@@ -5,7 +5,7 @@
 			<div class="flex flex-col items-start gap-3">
 				<div></div>
 				<div class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-				<div v-if="!ux.authenticated" @click="_click" class="p-3 rounded-sm cursor-pointer">
+				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="p-3 rounded-sm cursor-pointer">
 					<span v-if="!ux.Home.clicked">Check Availability</span>
 				</div>
 			</div>
@@ -38,6 +38,7 @@
 		data() {
 			return {
 				ux: {
+					authenticated: null,
 					Home: {
 						clicked: false
 					}
@@ -89,8 +90,10 @@
           if (response.status === 200) {
           	this.user = response.data;
           	store.publish('ux.authenticated.deep', true);
-          }
-				} catch (e) {}
+          } else {}
+				} catch (e) {
+					store.publish('ux.authenticated.deep', false);
+				}
 			},
 			async _click() {
 				if (this.ux.authenticated) return;
