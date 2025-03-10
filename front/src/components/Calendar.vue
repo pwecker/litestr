@@ -86,21 +86,16 @@
 				);
 				const { data } = response;
 
-				const attributes = Object.values(data.reduce((acc, curr) => {
-					const stat = curr.stat === 'confirmed' && curr.own ? 'owned' : curr.stat;
-					if (!acc[curr.stat]) {
-						acc[stat] = {
-							highlight: {
-								color: colors[stat],
-							  fillMode: fillModes[stat],
-							},
-							dates: []
-						};
+				const attributes = data.map((item) => {
+					const stat = item.stat === 'confirmed' && item.own ? 'owned' : item.stat;
+					return {
+						highlight: {
+							color: colors[stat],
+						  fillMode: fillModes[stat],
+						},
+						dates: [[item.in, item.out]]
 					}
-
-					acc[stat].dates.push([curr.in, curr.out]);
-					return acc;
-				}, {}));
+				});
 
 				this.attributes = attributes;
 			} catch(e) {}
