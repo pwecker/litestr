@@ -60,11 +60,11 @@
 		},
 		computed: {
 			blocked_dates() {
-				return this.attributes.map(item => {
-					return item.dates.map(range => ({
-						start: this._shift_day(range[0], 1),
-						end: this._shift_day(range[1], -1)
-					}));
+				return this.ranges.map(item => {
+					return {
+						start: this._shift_day(item.in, 1),
+						end: this._shift_day(item.out, -1)
+					};
 				}).flat();
 			},
 			highlighted_dates() {
@@ -114,19 +114,6 @@
 				);
 				const { data } = response;
 				this.ranges = data;
-
-				const attributes = data.map((item) => {
-					const stat = item.stat === 'confirmed' && item.own ? 'owned' : item.stat;
-					return {
-						highlight: {
-							color: colors[stat],
-						  fillMode: fillModes[stat],
-						},
-						dates: [[item.in, item.out]]
-					}
-				});
-
-				// this.attributes = attributes;
 			} catch(e) {}
 		},
 		methods: {

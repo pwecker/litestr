@@ -12,7 +12,7 @@
 		</div>
 	</div>
 	<div class="w-dvw h-dvh fixed top-0 z-[-1]">
-		<Carousel></Carousel>
+		<Carousel :loading></Carousel>
 	</div>
 	<div v-if="ux.authenticated" class="w-dvw h-dvh fixed top-0 z-[1]">
 		<Calendar v-if="ux.authenticated" :user="user"></Calendar>
@@ -29,6 +29,11 @@
 		components: {
 			Carousel,
 			Calendar
+		},
+		computed: {
+			loading() {
+				return false;
+			}
 		},
 		data() {
 			return {
@@ -47,8 +52,20 @@
 			store.publish('ux.Home', this.ux.Home);
 			store.subscribe('ux.Home', this._ux_Home);
 		},
-		mounted() {
+		async created() {
 			this._auth();
+			try {
+				const jwt = this.$cookies.get('jwt');
+				const response = await axios.get(
+					`${this.back_url}/api/reservations`,
+					{ headers: {
+					  'Content-Type': 'application/json',
+					  'Authorization': 'Bearer ' + jwt,
+					}}
+				);
+				const { data } = response;
+				this.ranges = data;
+			} catch(e) {}
 		},
 		methods: {
 			_ux(model) {
