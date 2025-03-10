@@ -22,7 +22,9 @@
       />
 		</div>
 		<div class="flex-1">
-			<span v-if="range && !verified" @click="_click" class="cursor-pointer">Book Now</span>
+			<span v-if="range && !verified" @click="_click" class="cursor-pointer">
+				<span v-if="!ux.Calendar.clicked">Request These Dates</span>
+			</span>
 		</div>
 	</div>
 </template>
@@ -68,6 +70,11 @@
 		},
 		data() {
 			return {
+				ux: {
+					Calendar: {
+						clicked: false
+					}
+				},
 				attributes: [],
 				range: null,
 				threshold: import.meta.env.VITE_RECAPTCHA_THRESHOLD || 0.5,
@@ -76,6 +83,11 @@
 				back_url: import.meta.env.VITE_BACK_URL || 'http://localhost:1337',
 				captchav2_site_key: import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || '123'
 			}
+		},
+		beforeMount() {
+			store.subscribe('ux', this._ux);
+			store.publish('ux.Calendar', this.ux.Calendar);
+			store.subscribe('ux.Calendar', this._ux_Calendar);
 		},
 		async created() {
 			try {
@@ -104,6 +116,16 @@
 			} catch(e) {}
 		},
 		methods: {
+			_ux(model) {
+				if (model) {
+					this.ux = { ...this.ux, ...model };
+				}
+			},
+			_ux_Calendar(model) {
+				if (model) {
+					this.ux.Calendar = { ...this.ux.Calendar, ...model };
+				}
+			},
 			_shift_day(dateStr, shift) {
 				const date = this._parse_utc(dateStr);
 				date.setUTCDate(date.getUTCDate() + shift);

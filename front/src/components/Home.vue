@@ -5,15 +5,17 @@
 			<div class="flex flex-col items-start gap-3">
 				<div></div>
 				<div class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-				<div @click="_click" class="p-3 rounded-sm cursor-pointer">Check Availability</div>
+				<div v-if="!ux.authenticated" @click="_click" class="p-3 rounded-sm cursor-pointer">
+					<span v-if="!ux.Home.clicked">Check Availability</span>
+				</div>
 			</div>
 		</div>
 	</div>
 	<div class="w-dvw h-dvh fixed top-0 z-[-1]">
 		<Carousel></Carousel>
 	</div>
-	<div v-if="authenticated" class="w-dvw h-dvh fixed top-0 z-[1]">
-		<Calendar v-if="authenticated" :user="user"></Calendar>
+	<div v-if="ux.authenticated" class="w-dvw h-dvh fixed top-0 z-[1]">
+		<Calendar v-if="ux.authenticated" :user="user"></Calendar>
 	</div>
 </template>
 <script>
@@ -30,13 +32,35 @@
 		},
 		data() {
 			return {
+				ux: {
+					Home: {
+						clicked: false
+					}
+				},
 				user: null,
-				authenticated: false,
 				back_url: import.meta.env.VITE_BACK_URL || 'http://localhost:1337',
 				front_url: import.meta.env.VITE_FRONT_URL || 'http://localhost:5173'
 			}
 		},
+		beforeMount() {
+			store.subscribe('ux', this._ux);
+			store.publish('ux.Home', this.ux.Home);
+			store.subscribe('ux.Home', this._ux_Home);
+		},
+		mounted() {
+			this._auth();
+		},
 		methods: {
+			_ux(model) {
+				if (model) {
+					this.ux = { ...this.ux, ...model };
+				}
+			},
+			_ux_Home(model) {
+				if (model) {
+					this.ux.Home = { ...this.ux.Home, ...model };
+				}
+			},
 			async _auth() {
 				try {
 					const jwt = this.$cookies.get('jwt');
@@ -47,12 +71,16 @@
           });
           if (response.status === 200) {
           	this.user = response.data;
-          	this.authenticated = true;
+          	store.publish('ux.authenticated.deep', true);
           }
 				} catch (e) {}
 			},
 			async _click() {
-				if (this.authenticated) return;
+				if (this.ux.authenticated) return;
+
+				const uxHome = { ...(store.model.ux.Home || {}) };
+				store.publish('ux.Home', { ...uxHome, clicked: true });
+
 				const authUrl = `${this.back_url}/api/connect/google`;
 				const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
 				if (!popup) {
@@ -70,9 +98,6 @@
 					{ once: true }
 				)
 			}
-		},
-		mounted() {
-			this._auth();
 		}
 	}
 </script>
