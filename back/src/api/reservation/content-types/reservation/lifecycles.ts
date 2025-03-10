@@ -5,7 +5,7 @@ interface LifecycleEvent {
     in: string;
     out: string;
     publishedAt: string | null;
-    user: { id: number, email: string }
+    user: { id: number, email: string, username: string }
   };
 }
 
@@ -15,7 +15,7 @@ interface Reservation {
   in: string;
   out: string;
   publishedAt: string | null;
-  user?: { id: number, email: string }
+  user?: { id: number, email: string, username: string }
 }
 
 function textDate(dateStr) {
@@ -79,7 +79,7 @@ export default {
 				tokens[action] = token;
 			}
 
-      const username = user.email.split('@')[0];
+      const username = user.username;
 
 			const baseUrl = process.env.BACK_URL;
 	    const cancelUrl = `${baseUrl}/api/reservations/action?token=${tokens.cancel}`;
@@ -126,7 +126,7 @@ export default {
 				tokens[action] = token;
 			}
 
-			const username = result.user.email.split('@')[0];
+			const username = result.user.username;
 
 			const baseUrl = process.env.BACK_URL;
 			const confirmUrl = `${baseUrl}/api/reservations/action?token=${tokens.confirm}`;
