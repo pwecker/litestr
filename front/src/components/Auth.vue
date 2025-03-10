@@ -1,4 +1,4 @@
-<template><Loading></Loading></template>
+<template><Loading :loading></Loading></template>
 <script>
 import axios from 'axios';
 import Loading from '@/components/Loading.vue';
@@ -7,6 +7,7 @@ export default {
 	components: { Loading },
 	data() {
 		return {
+			loading: true,
 			back_url: import.meta.env.VITE_BACK_URL || 'http://localhost:1337'
 		}
 	},
