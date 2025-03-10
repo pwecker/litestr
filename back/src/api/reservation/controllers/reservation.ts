@@ -27,7 +27,7 @@ export default factories.createCoreController('api::reservation.reservation', {
       const entries = await strapi.entityService.findMany('api::reservation.reservation', {
         filters: {
           in: {
-            $gt: new Date()
+            $gte: new Date()
           },
           $or: [
             {
