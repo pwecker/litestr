@@ -20,6 +20,7 @@
 	import axios from 'axios';
 	import Carousel from '@/components/Carousel.vue';
 	import Calendar from '@/components/Calendar.vue';
+	import { store } from '@/components/Store';
 
 	export default {
 		name: 'Home',

@@ -29,6 +29,7 @@
 <script>
 	import axios from 'axios';
 	import CaptchaV2 from '@/components/CaptchaV2.vue';
+	import { store } from '@/components/Store';
 
 	const colors = {
 		confirmed: 'gray',
