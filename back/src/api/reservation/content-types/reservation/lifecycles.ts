@@ -9,6 +9,15 @@ interface LifecycleEvent {
   };
 }
 
+interface Reservation {
+	id: number;
+  stat: 'requested' | 'confirmed' | 'denied' | 'cancelled';
+  in: string;
+  out: string;
+  publishedAt: string | null;
+  user?: { id: number, email: string }
+}
+
 function textDate(dateStr) {
   const [year, month, day] = dateStr.split('-').map(Number);
   const monthNames = [
@@ -34,17 +43,111 @@ function ordinalSuffix(day) {
 }
 
 export default {
+	async afterUpdate(event: LifecycleEvent) {
+		const { result } = event;
+
+		//document service
+		const { user } = await strapi.entityService.findOne('api::reservation.reservation', result.id, { populate: [ 'user' ] }) as Reservation;
+
+		const actions = ['cancel', 'deny'];
+			const tokens: Record<string, string> = {};
+
+			for (const action of actions) {
+				const token = await strapi
+				  .plugin('users-permissions')
+				  .service('jwt')
+				  .issue( {
+				  	id: result.id,
+				  	action,
+				  });
+
+				tokens[action] = token;
+			}
+
+			const baseUrl = process.env.BACK_URL;
+
+	    const cancelUrl = `${baseUrl}/api/reservations/action?token=${tokens.cancel}`;
+	    const denyUrl = `${baseUrl}/api/reservations/action?token=${tokens.deny}`;
+
+	    try {
+				await strapi.plugin('email').service('email').send({
+					to: process.env.ADMIN_EMAIL,
+					from: process.env.MANAGER_EMAIL,
+					replyTo: process.env.MANAGER_EMAIL,
+					subject: `Confirmed: ${textDate(result.in)} - ${textDate(result.out)}`,
+					text: ``,
+					html: `Confirmed: ${user.email}<br/>
+					  ${textDate(result.in)} - ${textDate(result.out)}<br/>
+					  <br/>
+					  <div style="display:flex">
+					    <a style="margin-right:10%;display:flex;text-decoration:none" href="${cancelUrl}">
+					      <div style="padding:1em;padding-top:0.69em;padding-bottom:0.69em;border:2px solid gray;border-radius:0.5em;color:gray;font-weight:bold;">Cancel</div>
+					    </a>
+					    <a style="display:flex;text-decoration:none" href="${denyUrl}">
+					      <div style="padding:1em;padding-top:0.69em;padding-bottom:0.69em;border:2px solid red;border-radius:0.5em;color:red;font-weight:bold;">Deny</div>
+					    </a>
+					  </div>`
+				});
+			} catch(e) {
+				// console.log(e)
+			}
+	},
 	async afterCreate(event: LifecycleEvent) {
 		const { result } = event;
 		if (result.stat === 'requested' && result.publishedAt !== null) {
+
+			const actions = ['confirm', 'cancel', 'deny'];
+			const tokens: Record<string, string> = {};
+
+			for (const action of actions) {
+				const token = await strapi
+				  .plugin('users-permissions')
+				  .service('jwt')
+				  .issue( {
+				  	id: result.id,
+				  	action,
+				  });
+
+				tokens[action] = token;
+			}
+
+			const baseUrl = process.env.BACK_URL;
+
+			const confirmUrl = `${baseUrl}/api/reservations/action?token=${tokens.confirm}`;
+	    const cancelUrl = `${baseUrl}/api/reservations/action?token=${tokens.cancel}`;
+	    const denyUrl = `${baseUrl}/api/reservations/action?token=${tokens.deny}`;
+
 			try {
 				await strapi.plugin('email').service('email').send({
 					to: process.env.ADMIN_EMAIL,
 					from: process.env.MANAGER_EMAIL,
 					replyTo: result.user.email,
-					subject: `Reservation Requested: ${textDate(result.in)} - ${textDate(result.out)}`,
+					subject: `${result.user.email.split('@')[0]} Requests: ${textDate(result.in)} - ${textDate(result.out)}`,
 					text: ``,
 					html: `A new reservation has been requested by ${result.user.email}<br/><br/><b>Check-in:</b> ${textDate(result.in)}<br/><b>Check-out:</b> ${textDate(result.out)}<br/><br/>Reply to this email to speak with them.`
+				});
+			} catch(e) {}
+			try {
+				await strapi.plugin('email').service('email').send({
+					to: process.env.ADMIN_EMAIL,
+					from: process.env.MANAGER_EMAIL,
+					replyTo: process.env.MANAGER_EMAIL,
+					subject: `Request Controls: ${textDate(result.in)} - ${textDate(result.out)}`,
+					text: ``,
+					html: `${result.user.email}<br/>
+					  ${textDate(result.in)} - ${textDate(result.out)}<br/>
+					  <br/>
+					  <div style="display:flex">
+					    <a style="margin-right:10%;display:flex;text-decoration:none" href="${confirmUrl}">
+					      <div style="padding:1em;padding-top:0.69em;padding-bottom:0.69em;border:2px solid green;border-radius:0.5em;color:green;font-weight:bold;">Confirm</div>
+					    </a>
+					    <a style="margin-right:10%;display:flex;text-decoration:none" href="${cancelUrl}">
+					      <div style="padding:1em;padding-top:0.69em;padding-bottom:0.69em;border:2px solid gray;border-radius:0.5em;color:gray;font-weight:bold;">Cancel</div>
+					    </a>
+					    <a style="display:flex;text-decoration:none" href="${denyUrl}">
+					      <div style="padding:1em;padding-top:0.69em;padding-bottom:0.69em;border:2px solid red;border-radius:0.5em;color:red;font-weight:bold;">Deny</div>
+					    </a>
+					  </div>`
 				});
 			} catch(e) {}
 		}

@@ -20,6 +20,44 @@ interface ReservationEntry {
 type PopulatedReservationEntry = Omit<ReservationEntry, 'user'> & { user: { id: number } };
 
 export default factories.createCoreController('api::reservation.reservation', {
+  async action(ctx) {
+    try {
+      const { token } = ctx.query;
+      if (!token) {
+        return ctx.badRequest('Missing token');
+      }
+
+      const decoded = await strapi.plugin('users-permissions').service('jwt').verify(token);
+      if (!decoded || !decoded.id || !decoded.action) {
+        return ctx.unauthorized('Invalid token');
+      }
+
+      //document service
+      const reservation = await strapi.entityService.findOne('api::reservation.reservation', decoded.id);
+      if (!reservation) {
+        return ctx.notFound('Reservation not found');
+      }
+
+      let updatedStat;
+      if (decoded.action === 'confirm') {
+        updatedStat = 'confirmed';
+      } else if (decoded.action === 'cancel') {
+        updatedStat = 'cancelled';
+      } else if (decoded.action === 'deny') {
+        updatedStat = 'denied';
+      }
+
+      //document service
+      await strapi.entityService.update('api::reservation.reservation', decoded.id, {
+        data: { stat: updatedStat }
+      });
+
+      return ctx.send(`Reservation ${updatedStat}.`)
+    } catch(e) {
+      return ctx.internalServerError('Error processing request');
+    }
+
+  },
   async find(ctx) {
     if (ctx.state.user) {
 
