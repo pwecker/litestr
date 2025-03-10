@@ -72,6 +72,9 @@ export default factories.createCoreController('api::reservation.reservation', {
               stat: 'confirmed'
             },
             {
+              stat: 'denied'
+            },
+            {
               stat: 'requested',
               user: ctx.state.user.id
             }

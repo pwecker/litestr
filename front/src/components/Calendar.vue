@@ -32,12 +32,14 @@
 
 	const colors = {
 		confirmed: 'gray',
+		denied: 'gray',
 		owned: 'green',
 		requested: 'yellow'
 	};
 
 	const fillModes = {
 		confirmed: 'solid',
+		denied: 'solid',
 		owned: 'solid',
 		requested: 'solid'
 	}
