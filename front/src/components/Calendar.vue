@@ -12,11 +12,11 @@
 		</div>
 		<div>
       <VDatePicker
-        v-if="attributes.length > 0"
+        v-if="ranges.length > 0"
         v-model.range="range"
         :min-date='new Date()'
         :columns="2"
-        :attributes="attributes"
+        :attributes="highlighted_dates"
         :disabled-dates="blocked_dates"
         :timezone="'UTC'"
       />
@@ -66,6 +66,18 @@
 						end: this._shift_day(range[1], -1)
 					}));
 				}).flat();
+			},
+			highlighted_dates() {
+				return this.ranges.map((item) => {
+					const stat = item.stat === 'confirmed' && item.own ? 'owned' : item.stat;
+					return {
+						highlight: {
+							color: colors[stat],
+						  fillMode: fillModes[stat],
+						},
+						dates: [[item.in, item.out]]
+					}
+				});
 			}
 		},
 		data() {
@@ -75,6 +87,7 @@
 						clicked: false
 					}
 				},
+				ranges: [],
 				attributes: [],
 				range: null,
 				threshold: import.meta.env.VITE_RECAPTCHA_THRESHOLD || 0.5,
@@ -100,6 +113,7 @@
 					}}
 				);
 				const { data } = response;
+				this.ranges = data;
 
 				const attributes = data.map((item) => {
 					const stat = item.stat === 'confirmed' && item.own ? 'owned' : item.stat;
@@ -112,7 +126,7 @@
 					}
 				});
 
-				this.attributes = attributes;
+				// this.attributes = attributes;
 			} catch(e) {}
 		},
 		methods: {
@@ -141,7 +155,7 @@
 			async _click() {
 				if (!this.verified) {
 					await this.$recaptchaLoaded();
-					const token = await this.$recaptcha('book_now');
+					const token = await this.$recaptcha('request_dates');
 					this._validate(token, 'v3');
 				}
 			},
@@ -157,9 +171,11 @@
 						}}
 					);
 					const { data } = response;
-					if (data.success && (data.score === undefined || data.score >= this.threshold)) {
+					if (data.success) {
 						this.verified = true;
-					} else if (data.score && data.score < this.threshold) {
+						this.range = null;
+						this.ranges.push(data.reservation);
+					} else {
 						this.captchav2 = true;
 					}
 				} catch(e) {

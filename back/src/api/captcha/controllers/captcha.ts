@@ -26,16 +26,19 @@ module.exports = {
 		if (data.score > threshold) {
 
 			//document service
-			strapi.entityService.create('api::reservation.reservation', { data: {
-				stat: 'requested',
-				in: dates.start.split('T')[0],
-				out: dates.end.split('T')[0],
-				user: user.id
-			},
-		  populate: ['user']
-		});
-		}
+			const reservation = await strapi.entityService.create('api::reservation.reservation', { data: {
+					stat: 'requested',
+					in: dates.start.split('T')[0],
+					out: dates.end.split('T')[0],
+					user: user.id
+				},
+			  populate: ['user']
+			});
 
-		return ctx.send(data);
+			return ctx.send({ success: true, reservation: reservation });
+		} else {
+
+			return ctx.send({ success: false })
+		}
 	}
 };
