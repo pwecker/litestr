@@ -22,6 +22,8 @@ type PopulatedReservationEntry = Omit<ReservationEntry, 'user'> & { user: { id: 
 export default factories.createCoreController('api::reservation.reservation', {
   async find(ctx) {
     if (ctx.state.user) {
+
+      //document service
       const entries = await strapi.entityService.findMany('api::reservation.reservation', {
         filters: {
           in: {

@@ -24,6 +24,8 @@ module.exports = {
 
 		const { data } = response;
 		if (data.score > threshold) {
+
+			//document service
 			strapi.entityService.create('api::reservation.reservation', { data: {
 				stat: 'requested',
 				in: dates.start.split('T')[0],
