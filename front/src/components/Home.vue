@@ -5,7 +5,7 @@
 		<div class="p-6 sm:p-12">
 			<div class="flex flex-col items-start gap-3">
 				<div></div>
-				<div class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+				<div :key="feature.documentId" class="mb-3">{{feature.description}}</div>
 				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="pointer-events-auto p-3 rounded-sm cursor-pointer">
 					<span v-if="!ux.Home.clicked">Check Availability</span>
 				</div>
@@ -52,6 +52,7 @@
 		},
 		data() {
 			return {
+				feature: {documentId: null, description: ''},
 				contents: [],
 				ux: {
 					authenticated: null,
@@ -69,6 +70,7 @@
 			store.subscribe('ux', this._ux);
 			store.publish('ux.Home', this.ux.Home);
 			store.subscribe('ux.Home', this._ux_Home);
+			store.subscribe('ux.Carousel.selected_index', this._ux_Carousel_selected_index);
 		},
 		async created() {
 			this._auth();
@@ -106,6 +108,11 @@
 			_ux_Home(model) {
 				if (model) {
 					this.ux.Home = { ...this.ux.Home, ...model };
+				}
+			},
+			_ux_Carousel_selected_index(model) {
+				if (model !== undefined) {
+					this.feature = this.contents[model];
 				}
 			},
 			async _auth() {
