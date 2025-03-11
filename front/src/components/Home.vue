@@ -1,46 +1,63 @@
 <template>
-	<div class="w-dvw h-dvh flex flex-col overflow-hidden">
+
+	<div class="w-dvw h-dvh fixed flex flex-col z-[1] overflow-hidden pointer-events-none">
 		<div class="flex-1"></div>
 		<div class="p-6 sm:p-12">
 			<div class="flex flex-col items-start gap-3">
 				<div></div>
 				<div class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
-				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="p-3 rounded-sm cursor-pointer">
+				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="pointer-events-auto p-3 rounded-sm cursor-pointer">
 					<span v-if="!ux.Home.clicked">Check Availability</span>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="w-dvw h-dvh fixed top-0 z-[-1]">
-		<Carousel :loading></Carousel>
+
+	<div class="w-dvw h-dvh fixed top-0 z-[0] pointer-events-auto">
+		<Loading :loading></Loading>
+		<Carousel :options="{pageDots:false,wrapAround:true}">
+			<div class="w-dvw h-dvh flex justify-center items-center" v-for="image in images">
+				<div class="w-full h-full bg-contain bg-center bg-no-repeat" :style="{ backgroundImage: `url(${image})` }"></div>
+			</div>
+		</Carousel>
 	</div>
+
 	<div v-if="ux.authenticated" class="w-dvw h-dvh fixed top-0 z-[1]">
 		<Calendar v-if="ux.authenticated" :user="user"></Calendar>
 	</div>
+
 </template>
 <script>
 	import axios from 'axios';
 	import Carousel from '@/components/Carousel.vue';
 	import Calendar from '@/components/Calendar.vue';
 	import { store } from '@/components/Store';
+	import Loading from '@/components/Loading.vue';
 
 	export default {
 		name: 'Home',
 		components: {
 			Carousel,
-			Calendar
+			Calendar,
+			Loading
 		},
 		computed: {
+			images() {
+				if (!this.ux.Home.images_loaded) return [];
+				return this.contents.map(content => this.front_url + '/' + content.media);
+			},
 			loading() {
-				return false;
+				return !this.ux.Home.images_loaded;
 			}
 		},
 		data() {
 			return {
+				contents: [],
 				ux: {
 					authenticated: null,
 					Home: {
-						clicked: false
+						clicked: false,
+						images_loaded: false
 					}
 				},
 				user: null,
@@ -56,19 +73,31 @@
 		async created() {
 			this._auth();
 			try {
-				const jwt = this.$cookies.get('jwt');
 				const response = await axios.get(
-					`${this.back_url}/api/reservations`,
+					`${this.back_url}/api/contents`,
 					{ headers: {
 					  'Content-Type': 'application/json',
-					  'Authorization': 'Bearer ' + jwt,
 					}}
 				);
-				const { data } = response;
-				this.ranges = data;
+				const { data } = response.data;
+				this.contents = data;
+				await this._preload_images();
+				store.publish('ux.Home', { ...this.ux.Home, images_loaded: true });
 			} catch(e) {}
 		},
 		methods: {
+			_preload_images() {
+				return Promise.all(
+					this.contents.map(content =>
+						new Promise(resolve => {
+							const img = new Image();
+							img.src = this.front_url + '/' + content.media;
+							img.onload = resolve;
+							img.onerror = resolve;
+						})
+					)
+				);
+			},
 			_ux(model) {
 				if (model) {
 					this.ux = { ...this.ux, ...model };
