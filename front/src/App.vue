@@ -10,4 +10,5 @@ store.publish('ux', {});
 
 <style>
   @import "tailwindcss";
+  @import "@/assets/base.css";
 </style>

@@ -16,7 +16,12 @@ app.use(VueCookies, {
   secure: import.meta.env['MODE'] === 'development' ? false : true,
   sameSite: "None"
 });
-app.use(VueReCaptcha, { siteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY || '123' });
+app.use(VueReCaptcha, {
+  siteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY || '123',
+  loaderOptions: {
+    autoHideBadge: true
+  }
+});
 app.use(VCalendar, {});
 
 app.mount('#app')

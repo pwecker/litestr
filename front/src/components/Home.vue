@@ -1,23 +1,22 @@
 <template>
 
-	<div class="w-dvw h-dvh fixed flex flex-col z-[1] overflow-hidden pointer-events-none">
+	<div v-if="!ux.authenticated && ux.authenticated !== null" class="w-dvw h-dvh fixed flex flex-col z-[1] overflow-hidden pointer-events-none">
 		<div class="flex-1"></div>
 		<div class="p-6 sm:p-12">
-			<div class="flex flex-col items-start gap-3">
-				<div></div>
-				<div :key="feature.documentId" class="mb-3">{{feature.description}}</div>
-				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="pointer-events-auto p-3 rounded-sm cursor-pointer">
-					<span v-if="!ux.Home.clicked">Check Availability</span>
+			<div class="flex flex-col items-start gap-3 p-3">
+				<div :key="feature.documentId" class="group h-8 select-none rounded-lg bg-white px-3 text-sm leading-8 text-zinc-950">{{feature.description}}</div>
+				<div v-if="!ux.authenticated && ux.authenticated !== null" @click="_click" class="pointer-events-auto rounded-sm cursor-pointer">
+					<button @click="_click" :style="{opacity: !ux.Home.clicked ? 1 : 0.5}" class="cursor-pointer group h-8 select-none rounded-lg bg-white px-3 text-sm leading-8 text-zinc-950 shadow-[0_-1px_0_0px_#d4d4d8_inset,0_0_0_1px_#f4f4f5_inset,0_0.5px_0_1.5px_#fff_inset] hover:bg-zinc-50 hover:via-zinc-900 hover:to-zinc-800 active:shadow-[-1px_0px_1px_0px_#e4e4e7_inset,1px_0px_1px_0px_#e4e4e7_inset,0px_0.125rem_1px_0px_#d4d4d8_inset]"><span class="block group-active:[transform:translate3d(0,1px,0)]">Check Availability</span></button>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="w-dvw h-dvh fixed top-0 z-[0] pointer-events-auto">
+	<div v-if="!ux.authenticated && ux.authenticated !== null" class="w-dvw h-dvh fixed top-0 z-[0] pointer-events-auto">
 		<Loading :loading></Loading>
 		<Carousel :options="{pageDots:false,wrapAround:true}">
 			<div class="w-dvw h-dvh flex justify-center items-center" v-for="image in images">
-				<div class="w-full h-full bg-contain bg-center bg-no-repeat" :style="{ backgroundImage: `url(${image})` }"></div>
+				<div class="w-full h-full max-h-[95vh] max-w-[95vw] bg-contain bg-center bg-no-repeat" :style="{ backgroundImage: `url(${image})` }"></div>
 			</div>
 		</Carousel>
 	</div>
