@@ -2,3 +2,4 @@
 /front/.env*
 *.bak
 scratch
+front/public/*
