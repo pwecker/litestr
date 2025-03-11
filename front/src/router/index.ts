@@ -13,6 +13,11 @@ const router = createRouter({
       component: () => import('@/components/Auth.vue')
     },
     {
+      path: '/logout',
+      name: 'Logout',
+      component: () => import('@/components/Logout.vue')
+    },
+    {
       path: '/:404(.*)*',
       name: '404',
       component: () => import('@/components/404.vue')

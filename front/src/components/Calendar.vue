@@ -7,8 +7,9 @@
 		  @errored="_captchav2_errored"
 		  @expired="_captchav2_expired"
 		/>
-		<div class="w-full h-[3em]">
+		<div class="w-full flex justify-between h-[3em]">
 			{{ user?.username || 'User...' }}
+			<a href="logout">Logout</a>
 		</div>
 		<div>
       <VDatePicker
