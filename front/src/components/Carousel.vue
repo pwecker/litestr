@@ -135,5 +135,5 @@
 	}
 </script>
 <style scoped>
-	@import 'https://unpkg.com/flickity@2/dist/flickity.min.css'
+	@import 'https://unpkg.com/flickity@2/dist/flickity.min.css';
 </style>
